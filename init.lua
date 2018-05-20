@@ -80,23 +80,6 @@ minetest.register_on_player_receive_fields( function( player, formname, fields )
 	player:set_wielded_item( tunneler )
 end)
 
-
-minetest.register_tool( "tunneltest:tunneler", {
-	description = "Tunneler",
-	inventory_image = "tunneler16.png",
-	wield_scale = {x=2,y=2,z=1},
-	tool_capabilities = {
-		max_drop_level=3,
-		full_punch_interval = 10,
-		groupcaps= {
-		    cracky={times={[1]=2.00, [2]=0.75, [3]=0.50}, uses=0, maxlevel=2},
-		},
-	},
-	on_place = tunneler_config,
-	stack_max = 1,
-	on_secondary_use = tunneler_config
-})
-
 minetest.register_on_dignode( function( pos, node, player )
 	--see if it's a tunneler
 	if player:get_wielded_item():get_name() ~= "tunneltest:tunneler" then
@@ -144,3 +127,28 @@ minetest.register_on_dignode( function( pos, node, player )
 	meta:set_int("used",0)
 	player:set_wielded_item( tunneler )
 end)
+
+minetest.register_tool( "tunneltest:tunneler", {
+	description = "Tunneler",
+	inventory_image = "tunneler16.png",
+	wield_scale = {x=2,y=2,z=1},
+	tool_capabilities = {
+		max_drop_level=3,
+		full_punch_interval = 10,
+		groupcaps= {
+		    cracky={times={[1]=2.00, [2]=0.75, [3]=0.50}, uses=100, maxlevel=2},
+		},
+	},
+	on_place = tunneler_config,
+	stack_max = 1,
+	on_secondary_use = tunneler_config
+})
+
+minetest.register_craft({
+	output = "tunneltest:tunneler",
+	recipe = {
+		{ "default:stone", "default:stone", "default:stone" },
+		{ "default:stone", "group:stick", "" },
+		{ "", "group:stick", "" },
+	}
+})
