@@ -1,15 +1,23 @@
 local tunneler_huds = {}
+local N = 7
+local M = 7
 
 local function tunneler_config( tunneler, player, point )
 	local meta = tunneler:get_meta()
 	--digabel size limited here FIXME
-	tunneler_huds[ player:get_player_name() ] = {{},{},{}}
-	local digtable = {{},{},{}}
+	tunneler_huds[ player:get_player_name() ] = {}
+	local player_hud = tunneler_huds[ player:get_player_name() ]
+	local digtable = {}
+	for i = 1,N do
+		digtable[ #digtable + 1 ] = {}
+		player_hud[ #player_hud + 1 ] = {}
+	end
 	--setting up formspec, and hud
-	local formspec = "size[3,3]position[.9,.9]anchor[1,1]background[-1,-1;5,5;digbg.png;]"
-	for i = 1,3 do
-		for j = 1,3 do
+	local formspec = "size["..N..","..M.."]position[1,1]anchor[1,1]background[-1,-1;"..(N+2)..","..(M+2)..";digbg2.png;]"
+	for i = 1,N do
+		for j = 1,M do
 			--reading meta
+			--FIXME size limit
 			digtable[i][j] = ( meta:get_int("b"..i..j) == 1 )
 
 			--setting formspec
@@ -17,12 +25,13 @@ local function tunneler_config( tunneler, player, point )
 			if digtable[i][j] then
 				s = "dig.png"
 			end
+			--FIXME size limit, new name with leading zeros/separator
 			formspec = formspec .. "image_button["..(i-1)..","..(j-1)..";1,1;digformspec.png;b"..i..j..";;;;digpressed.png]"
 
 			--setting up hud
 			tunneler_huds[ player:get_player_name() ][i][j] = player:hud_add({
 				hud_elem_type = "image",
-				position = { x=.45, y=.45 },
+				position = { x=0, y=0 },
 				offset = { x=i*38, y=j*38 },
 				text = s,
 				scale = {x=2, y=2},
@@ -42,8 +51,8 @@ minetest.register_on_player_receive_fields( function( player, formname, fields )
 
 	--if quitting, remove hud
 	if fields["quit"] == "true" then
-		for i = 1,3 do
-			for j = 1,3 do
+		for i = 1,N do
+			for j = 1,M do
 				player:hud_remove( tunneler_huds[ player:get_player_name() ][i][j] )
 			end
 		end
@@ -57,6 +66,7 @@ minetest.register_on_player_receive_fields( function( player, formname, fields )
 		--flip flag for field
 		meta:set_int( i, 1-meta:get_int(i) )
 		--update hud
+		--FIXME size limit to 9, use splicing/leading zeros
 		local x = tonumber(i:sub(2,2))
 		local y = tonumber(i:sub(3,3))
 		local s = "nodig.png"
@@ -115,14 +125,17 @@ minetest.register_on_dignode( function( pos, node, player )
 		horizontal.z = look_dir.x / math.abs( look_dir.x )
 	end
 
-	--FIXME limited size
+	local dh = math.floor( N/2 ) + 1
+	local dv = math.floor( M/2 ) + 1
+
 	--dig everything else
-	for i = 1,3 do
-		for j = 1,3 do
+	for i = 1,N do
+		for j = 1,M do
+			--FIXME spliceing/leading zeros
 			if meta:get_int( "b"..i..j ) == 1 then
 				local newpos = vector.new( pos )
-				newpos = vector.add( newpos, vector.multiply( horizontal, (2-i)))
-				newpos = vector.add(newpos, vector.multiply(vector.new(0,1,0), (2-j)))
+				newpos = vector.add( newpos, vector.multiply( horizontal, (dh-i)))
+				newpos = vector.add(newpos, vector.multiply(vector.new(0,1,0), (dv-j)))
 				minetest.node_dig( newpos, minetest.get_node(newpos), player )
 			end
 		end
