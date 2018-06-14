@@ -1,10 +1,10 @@
 local tunneler_huds = {}
-local N = 7
-local M = 7
+local settings = dofile( minetest.get_modpath("tunneltest") .. "/tunneltest.conf" )
+local N = settings.N
+local M = settings.M
 
 local function tunneler_config( tunneler, player, point )
 	local meta = tunneler:get_meta()
-	--digabel size limited here FIXME
 	tunneler_huds[ player:get_player_name() ] = {}
 	local player_hud = tunneler_huds[ player:get_player_name() ]
 	local digtable = {}
@@ -17,25 +17,23 @@ local function tunneler_config( tunneler, player, point )
 	for i = 1,N do
 		for j = 1,M do
 			--reading meta
-			--FIXME size limit
-			digtable[i][j] = ( meta:get_int("b"..i..j) == 1 )
+			digtable[i][j] = ( meta:get_int("b"..i.."-"..j) == 1 )
 
 			--setting formspec
 			local s = "nodig.png"
 			if digtable[i][j] then
 				s = "dig.png"
 			end
-			--FIXME size limit, new name with leading zeros/separator
-			formspec = formspec .. "image_button["..(i-1)..","..(j-1)..";1,1;digformspec.png;b"..i..j..";;;;digpressed.png]"
+			formspec = formspec .. "image_button["..(i-1)..","..(j-1)..";1,1;digformspec.png;b"..i.."-"..j..";;;;digpressed.png]"
 
 			--setting up hud
 			tunneler_huds[ player:get_player_name() ][i][j] = player:hud_add({
 				hud_elem_type = "image",
-				position = { x=0, y=0 },
-				offset = { x=i*38, y=j*38 },
+				position = settings.hud.pos,
+				offset = { x=i*settings.hud.x_offset, y=j*settings.hud.y_offset },
 				text = s,
-				scale = {x=2, y=2},
-				alignment = { x=.5, y=.5}
+				scale = settings.hud.scale,
+				alignment = settings.hud.alignment
 			})
 		end
 	end
@@ -66,9 +64,9 @@ minetest.register_on_player_receive_fields( function( player, formname, fields )
 		--flip flag for field
 		meta:set_int( i, 1-meta:get_int(i) )
 		--update hud
-		--FIXME size limit to 9, use splicing/leading zeros
-		local x = tonumber(i:sub(2,2))
-		local y = tonumber(i:sub(3,3))
+		local _, _, x, y = string.find( i, "b(%d+)-(%d+)" )
+		x = tonumber(x)
+		y = tonumber(y)
 		local s = "nodig.png"
 		if meta:get_int(i) == 1 then
 			s = "dig.png"
@@ -114,8 +112,8 @@ minetest.register_on_dignode( function( pos, node, player )
 	--dig everything else
 	for i = 1,N do
 		for j = 1,M do
-			--FIXME spliceing/leading zeros
-			if meta:get_int( "b"..i..j ) == 1 then
+			--FIXME names in meta
+			if meta:get_int( "b"..i.."-"..j ) == 1 then
 				local newpos = vector.new( pos )
 				newpos = vector.add( newpos, vector.multiply( horizontal, (dh-i)))
 				newpos = vector.add(newpos, vector.multiply(vector.new(0,1,0), (dv-j)))
@@ -128,6 +126,7 @@ minetest.register_on_dignode( function( pos, node, player )
 	player:set_wielded_item( tunneler )
 end)
 
+--TODO values from config, multiple versions with different specs, etc.
 minetest.register_tool( "tunneltest:tunneler", {
 	description = "Tunneler",
 	inventory_image = "tunneler16.png",
@@ -148,7 +147,7 @@ minetest.register_craft({
 	output = "tunneltest:tunneler",
 	recipe = {
 		{ "default:stone", "default:stone", "default:stone" },
-		{ "default:stone", "group:stick", "" },
-		{ "", "group:stick", "" },
+		{ "default:stone", "group:stick",   "" },
+		{ "",              "group:stick",   "" },
 	}
 })
