@@ -8,6 +8,7 @@ local function tunneler_config( tunneler, player, point )
 
 	--get parameters of the configured tool
 	local meta = tunneler:get_meta()
+	local meta_table = meta:to_table()
 	local N = tunneler:get_definition()["_N"]
 	local M = tunneler:get_definition()["_M"]
 
@@ -28,6 +29,10 @@ local function tunneler_config( tunneler, player, point )
 	for i = 1,N do
 		for j = 1,M do
 			--fill digtable
+			--fields might not exist, if tool has not been used yet
+			--if meta_table[ "b"..i.."-"..j ] == nil then
+			--	meta:set_int( "b"..i.."-"..j, 0 )
+			--end
 			digtable[i][j] = ( meta:get_int("b"..i.."-"..j) == 1 )
 
 			--setting up formspec
@@ -135,6 +140,8 @@ local function tunneler_on_dig( pos, node, player )
 
 	--all other digs will be nonoriginal
 	meta:set_int( "used", 1 )
+	--need to reset, before calling dig on other nodes
+	player:set_wielded_item( tunneler )
 
 	--calcualte directions
 	--TODO do it with dit_to_facedir facedir_to_dir -> propably more robust
