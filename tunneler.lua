@@ -122,6 +122,11 @@ end
 
 local function tunneler_on_dig( pos, node, player )
 
+	--when sand falls on a troch digging happens without a player
+	if player == nil then
+		return
+	end
+
 	--see if it's a tunneler
 	if string.find(player:get_wielded_item():get_name(), "tunneltest:.*_tunneler") == nil then
 		return
